@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "f7QZv+2ea1BZ8TTbkNp1zxLv22EYtx+7xFTxQLe9yZcVLkI4Jda/57tz3+d843EO1WThJ6UHCgGOsvxq5/wS8A==",
+  "success": true,
+  "projectFilePath": "C:\\Users\\astor\\test\\fsharp\\fsaoc\\2023\\Day1\\Day1.fsproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\astor\\.nuget\\packages\\fsharp.core\\8.0.100\\fsharp.core.8.0.100.nupkg.sha512"
+  ],
+  "logs": []
+}
