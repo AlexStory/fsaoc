@@ -162,5 +162,5 @@ getGears input findParts
 |> Map.map (fun _ l -> l[0] * l[1])
 |> Map.values
 |> Seq.sum
-|> fun x -> printfn $"{x}"
+|> fun x -> printfn $"Part 2: {x}"
 
