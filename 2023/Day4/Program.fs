@@ -64,7 +64,7 @@ let rec getWinningCards' (allCards: Card list) (cards: Card list) (cardMap: Map<
                 getWinningCards' allCards rest newCardMap newAcc
 
 let input =
-    Path.Join(__SOURCE_DIRECTORY__, "input.txt")
+    Path.Join(__SOURCE_DIRECTORY__, "test.txt")
     |> File.ReadAllLines 
     |> Seq.map Card.ofString
 
