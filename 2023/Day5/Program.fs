@@ -23,6 +23,53 @@ type Data = {
     seeds: bigint list
 }
 
+type Range = {
+    start: bigint
+    stop: bigint
+}
+
+
+type RangeData = {
+    entries: Entry list
+    ranges: Range list
+}
+
+let overlaps entry range =
+    let entryStop = entry.source + entry.range - 1I
+    not (entry.source > range.stop || entryStop < range.start)        
+let mapRangeToEntries entries range =
+    let overlappingEntries = entries |> List.filter (fun entry -> overlaps entry range)
+    if List.isEmpty overlappingEntries then [range] // If no entries overlap with the range, return the original range
+    else
+        let mappedRanges = overlappingEntries |> List.fold (fun acc entry ->
+                let overlapStart = max entry.source range.start
+                let overlapStop = min (entry.source + entry.range - 1I) range.stop
+                let mapped = { start = entry.destination + (overlapStart - entry.source); stop = entry.destination + (overlapStop - entry.source) }
+                acc @ [mapped]) []
+        let minOverlapStart = overlappingEntries |> List.map (fun entry -> entry.source) |> List.min
+        let maxOverlapStop = overlappingEntries |> List.map (fun entry -> entry.source + entry.range - 1I) |> List.max
+        let beforeOverlap = if minOverlapStart > range.start then [{ start = range.start; stop = minOverlapStart - 1I }] else []
+        let afterOverlap = if maxOverlapStop < range.stop then [{ start = maxOverlapStop + 1I; stop = range.stop }] else []
+        mappedRanges @ beforeOverlap @ afterOverlap       
+
+        
+let mapRanges (rangeData: RangeData) =
+    let translations = [SeedToSoil; SoilToFertilizer; FertilizerToWater; WaterToLight; LightToTemperature; TemperatureToHumidity; HumidityToLocation]
+    let rec map (translations: Translation list) (rangeData: RangeData) =
+        match translations with
+        | [] -> rangeData
+        | translation :: rest ->
+            let entriesForCurrentTranslation = List.filter (fun entry -> entry.category = translation) rangeData.entries
+            let mappedRanges = rangeData.ranges |> List.collect (mapRangeToEntries entriesForCurrentTranslation)
+            map rest { rangeData with ranges = mappedRanges }
+    map translations rangeData
+    
+let findLowestLocation (rangeData: RangeData) =
+    let finalRangeData = mapRanges rangeData
+
+    finalRangeData.ranges
+    |> List.minBy (fun range -> range.start)
+
 module Entry =
     let ofString (t: Translation ) (s: string) =
         let nums = s |> _.Split(" ") |> Array.map (BigInteger.Parse)
@@ -70,6 +117,16 @@ module Data =
         let entries = entries @ List.map (Entry.ofString HumidityToLocation) toLocations
 
         { entries = entries; seeds = seeds}
+
+    
+    let toRange (data: Data) =
+            let ranges = 
+                data.seeds
+                |> List.chunkBySize 2
+                |> List.map (function
+                    | [start; length] -> { start = start; stop = start + length - 1I }
+                    | _ -> failwith "Invalid seed data")
+            { entries = data.entries; ranges = ranges; }
 
     let SeedToSoil (data: Data) (seed: bigint) =
         let map = List.tryFind (fun (x: Entry) -> x.category = SeedToSoil && x.source <= seed && (x.source + x.range) >= seed ) data.entries
@@ -132,5 +189,11 @@ input
 |> _.seeds
 |> Seq.map (fun x -> Data.SeedToLocation input x)
 |> Seq.min
-|> fun x -> printfn $"{x}"
+|> fun x -> printfn $"Part 1: {x}"
 // |> Seq.iter (fun x -> printfn $"{x}")
+
+input
+|> Data.toRange
+|> findLowestLocation
+|> (fun x -> printfn $"Part 2:{x.start} {x.stop}")
+
